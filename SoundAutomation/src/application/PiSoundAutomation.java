@@ -29,7 +29,7 @@ import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.Player;
 
-public class SoundAutomation extends JFrame {
+public class PiSoundAutomation extends JFrame {
 
 	// GPIO
 	private GpioController gpio;
@@ -62,11 +62,11 @@ public class SoundAutomation extends JFrame {
 
 	public static void main(String args[]) {
 
-		new SoundAutomation();
+		new PiSoundAutomation();
 
 	}
 
-	public SoundAutomation() {
+	public PiSoundAutomation() {
 
 		initUi();
 		initGpio();
@@ -75,7 +75,7 @@ public class SoundAutomation extends JFrame {
 
 	private void initUi() {
 
-		setTitle("SoundAutomation");
+		setTitle("PiSoundAutomation by Markus Thaler");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setLayout(new BorderLayout(10, 10));
 		setSize(new Dimension(600, 400));
