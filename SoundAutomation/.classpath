@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.fx.ide.jdt.core.JAVAFX_CONTAINER"/>
+	<classpathentry kind="lib" path="lib/jl1.0.1.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="file:/C:/Users/thaleradm/Downloads/jlayer1.0.1/JLayer1.0.1/doc/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/pi4j-core.jar"/>
+	<classpathentry kind="lib" path="lib/pi4j-device.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
