@@ -283,12 +283,13 @@ public class PiSoundAutomation extends JFrame {
 			player.close();
 
 			if (playerStart) {
-				playerStart = false;
+
 				System.out.println("Player wurde gestoppt");
 				updateList("Player wurde gestoppt");
 			}
 
 		}
+		playerStart = false;
 	}
 
 	private void startPlayerThread() {
