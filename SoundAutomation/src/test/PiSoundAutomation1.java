@@ -1,4 +1,4 @@
-package application;
+package test;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -29,41 +29,46 @@ import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.Player;
 
-public class PiSoundAutomation extends JFrame {
+public class PiSoundAutomation1 extends JFrame {
 
 	// GPIO
 	private GpioController gpio;
+
 	private GpioPinDigitalInput input00;
 	private GpioPinDigitalInput input01;
 	private GpioPinDigitalInput input02;
 	private GpioPinDigitalInput input03;
 	private GpioPinDigitalInput input04;
-	private GpioPinDigitalInput input05;
-	private GpioPinDigitalInput input06;
 
 	// Music
+	private String pathToMusic = System.getProperty("user.home") + File.separator + "Music" + File.separator;
+	private String filename;
+	private Player player;
+
+	private int lastSong;
+	private int playSong;
+
 	private final String SONG_01 = "standby.mp3";
 	private final String SONG_02 = "coinInserted.mp3";
 	private final String SONG_03 = "playing.mp3";
 	private final String SONG_04 = "winner.mp3";
 	private final String SONG_05 = "looser.mp3";
 
-	private Soundman soundman;
-	private SoundmanThread soundmanThread;
+	private Thread playerThread;
+	private static boolean playerStart;
 
 	private JList<String> list;
 	private DefaultListModel<String> listModel;
 
 	public static void main(String args[]) {
 
-		new PiSoundAutomation();
+		new PiSoundAutomation1();
 
 	}
 
-	public PiSoundAutomation() {
+	public PiSoundAutomation1() {
 
 		initUi();
-		initWalkman();
 		initGpio();
 
 	}
@@ -89,20 +94,10 @@ public class PiSoundAutomation extends JFrame {
 
 	}
 
-	private void initWalkman() {
-
-		soundman = new Soundman();
-
-		SoundmanThread soundmanThread = new SoundmanThread(soundman);
-
-		Thread th = new Thread(soundmanThread);
-		th.start();
-
-	}
-
 	private void initGpio() {
 
 		System.out.println("initGpio");
+		updateList("initGpio");
 
 		gpio = GpioFactory.getInstance();
 
@@ -111,8 +106,6 @@ public class PiSoundAutomation extends JFrame {
 		input02 = gpio.provisionDigitalInputPin(RaspiPin.GPIO_02, PinPullResistance.PULL_DOWN);
 		input03 = gpio.provisionDigitalInputPin(RaspiPin.GPIO_03, PinPullResistance.PULL_DOWN);
 		input04 = gpio.provisionDigitalInputPin(RaspiPin.GPIO_04, PinPullResistance.PULL_DOWN);
-		input05 = gpio.provisionDigitalInputPin(RaspiPin.GPIO_05, PinPullResistance.PULL_DOWN);
-		input06 = gpio.provisionDigitalInputPin(RaspiPin.GPIO_06, PinPullResistance.PULL_DOWN);
 
 		// set shutdown state for this input pin
 		input00.setShutdownOptions(true);
@@ -120,8 +113,6 @@ public class PiSoundAutomation extends JFrame {
 		input02.setShutdownOptions(true);
 		input03.setShutdownOptions(true);
 		input04.setShutdownOptions(true);
-		input05.setShutdownOptions(true);
-		input06.setShutdownOptions(true);
 
 		// create and register gpio pin listener
 		input00.addListener(new GpioPinListenerDigital() {
@@ -129,11 +120,16 @@ public class PiSoundAutomation extends JFrame {
 			public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
 				// display pin state on console
 				System.out.println(" --> GPIO PIN STATE CHANGE: " + event.getPin() + " = " + event.getState());
+				updateList("GPIO PIN STATE CHANGE: " + event.getPin() + " = " + event.getState());
 
 				if (event.getState() == PinState.HIGH) {
-					if (soundman.isPlay())
-						soundman.stop();
-					soundman.play(SONG_01);
+					playSong = 1;
+					play();
+
+				}
+
+				if (event.getState() == PinState.LOW) {
+					stop();
 
 				}
 
@@ -146,11 +142,15 @@ public class PiSoundAutomation extends JFrame {
 			public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
 				// display pin state on console
 				System.out.println(" --> GPIO PIN STATE CHANGE: " + event.getPin() + " = " + event.getState());
-
+				updateList("GPIO PIN STATE CHANGE: " + event.getPin() + " = " + event.getState());
 				if (event.getState() == PinState.HIGH) {
-					if (soundman.isPlay())
-						soundman.stop();
-					soundman.play(SONG_02);
+					playSong = 2;
+					play();
+
+				}
+
+				if (event.getState() == PinState.LOW) {
+					stop();
 
 				}
 
@@ -163,11 +163,16 @@ public class PiSoundAutomation extends JFrame {
 			public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
 				// display pin state on console
 				System.out.println(" --> GPIO PIN STATE CHANGE: " + event.getPin() + " = " + event.getState());
+				updateList("GPIO PIN STATE CHANGE: " + event.getPin() + " = " + event.getState());
 
 				if (event.getState() == PinState.HIGH) {
-					if (soundman.isPlay())
-						soundman.stop();
-					soundman.play(SONG_03);
+					playSong = 3;
+					play();
+
+				}
+
+				if (event.getState() == PinState.LOW) {
+					stop();
 
 				}
 
@@ -179,11 +184,16 @@ public class PiSoundAutomation extends JFrame {
 			public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
 				// display pin state on console
 				System.out.println(" --> GPIO PIN STATE CHANGE: " + event.getPin() + " = " + event.getState());
+				updateList("GPIO PIN STATE CHANGE: " + event.getPin() + " = " + event.getState());
 
 				if (event.getState() == PinState.HIGH) {
-					if (soundman.isPlay())
-						soundman.stop();
-					soundman.play(SONG_04);
+					playSong = 4;
+					play();
+				}
+
+				if (event.getState() == PinState.LOW) {
+					stop();
+
 				}
 
 			}
@@ -194,44 +204,23 @@ public class PiSoundAutomation extends JFrame {
 			public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
 				// display pin state on console
 				System.out.println(" --> GPIO PIN STATE CHANGE: " + event.getPin() + " = " + event.getState());
+				updateList("GPIO PIN STATE CHANGE: " + event.getPin() + " = " + event.getState());
 
 				if (event.getState() == PinState.HIGH) {
-					if (soundman.isPlay())
-						soundman.stop();
-					soundman.play(SONG_05);
+					playSong = 5;
+					play();
+				}
+
+				if (event.getState() == PinState.LOW) {
+					stop();
+
 				}
 
 			}
 
 		});
 
-		input05.addListener(new GpioPinListenerDigital() {
-			@Override
-			public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
-				// display pin state on console
-				System.out.println(" --> GPIO PIN STATE CHANGE: " + event.getPin() + " = " + event.getState());
-
-				if (event.getState() == PinState.HIGH) {
-					soundman.stop();
-				}
-
-			}
-
-		});
-
-		input06.addListener(new GpioPinListenerDigital() {
-			@Override
-			public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
-				// display pin state on console
-				System.out.println(" --> GPIO PIN STATE CHANGE: " + event.getPin() + " = " + event.getState());
-
-				if (event.getState() == PinState.HIGH) {
-					soundman.setRepeat(true);
-				}
-
-			}
-
-		});
+		startPlayerThread();
 
 		// Programm laufen lassen (CTRL-C)
 		// while (true) {
@@ -243,6 +232,153 @@ public class PiSoundAutomation extends JFrame {
 		// }
 		// }
 
+	}
+
+	private synchronized void play() {
+
+		switch (playSong) {
+		case 1:
+			filename = SONG_01;
+			break;
+		case 2:
+			filename = SONG_02;
+			break;
+		case 3:
+			filename = SONG_03;
+			break;
+		case 4:
+			filename = SONG_04;
+			break;
+		case 5:
+			filename = SONG_05;
+			break;
+		default:
+			break;
+		}
+
+		System.out.println("Letztes Lied: " + lastSong + "; Neues Lied: " + playSong);
+		updateList("Letztes Lied: " + lastSong + "; Neues Lied: " + playSong);
+
+		stop();
+
+		try {
+			FileInputStream fileInputStream = new FileInputStream(pathToMusic + filename);
+			player = new Player(fileInputStream);
+
+			playerStart = true;
+
+		} catch (JavaLayerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+	}
+
+	private synchronized void stop() {
+
+		if (player != null) {
+			player.close();
+
+			if (playerStart) {
+
+				System.out.println("Player wurde gestoppt");
+				updateList("Player wurde gestoppt");
+			}
+
+		}
+		playerStart = false;
+		System.err.println("Methode stop(): playerStart= " + playerStart);
+	}
+
+	private void startPlayerThread() {
+
+		playerThread = new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+
+				System.out.println(Thread.currentThread().getName() + ": Start");
+				updateList(Thread.currentThread().getName() + ": Start");
+
+				while (!Thread.currentThread().isInterrupted()) {
+
+					// System.out.println(Thread.currentThread().getName() + ": while() Beginn");
+
+					if (player != null)
+						try {
+
+							System.err.println("Methode startPlayerThread(): playerStart= " + playerStart);
+
+							if (playerStart && playSong != lastSong) {
+								System.out.println("Neues Lied wird ausgewaehlt: " + filename);
+								updateList("Neues Lied wird ausgewaehlt: " + filename);
+							}
+
+							if (playerStart && playSong == lastSong) {
+								System.out.println("Lied wird wiederholt: " + filename);
+								updateList("Lied wird wiederholt: " + filename);
+
+								FileInputStream fileInputStream = new FileInputStream(pathToMusic + filename);
+								player = new Player(fileInputStream);
+
+							}
+
+							if (playerStart) {
+
+								System.out.println("Player wird gestartet");
+								updateList("Player wird gestartet");
+
+								player.play();
+
+								System.out.println("Player ist fertig");
+								updateList("Player ist fertig");
+
+								lastSong = playSong;
+							}
+
+						} catch (JavaLayerException e1) {
+
+							e1.printStackTrace();
+						} catch (FileNotFoundException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+
+					try {
+						Thread.sleep(1);
+
+					} catch (InterruptedException e) {
+
+						e.printStackTrace();
+						Thread.currentThread().interrupt();
+
+					}
+
+					// System.out.println(Thread.currentThread().getName() + ": while() Ende");
+
+				}
+
+			}
+		});
+
+		playerThread.start();
+
+	}
+
+	private void updateList(String text) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+
+				Date date = new Date();
+				SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+
+				listModel.add(0, simpleDateFormat.format(date) + ": " + text);
+				// listModel.addElement(text);
+			}
+		});
 	}
 
 }
