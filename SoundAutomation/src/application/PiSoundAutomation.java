@@ -57,13 +57,19 @@ public class PiSoundAutomation extends JFrame {
 
 	public PiSoundAutomation() {
 
+		updateList("Starte Programm");
+
 		initUi();
 		initSongs();
 		initGpio();
 		initThread();
+
+		updateList("Warte auf Eingang");
 	}
 
 	private void initUi() {
+
+		updateList("Initialisiere Grafik");
 
 		setTitle("PiSoundAutomation");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -86,6 +92,8 @@ public class PiSoundAutomation extends JFrame {
 
 	private void initThread() {
 
+		updateList("Initialisiere Thread");
+
 		soundPlayer = new SoundPlayer();
 		SoundPlayerThread soundPlayerThread = new SoundPlayerThread(soundPlayer);
 
@@ -95,6 +103,8 @@ public class PiSoundAutomation extends JFrame {
 	}
 
 	private void initSongs() {
+
+		updateList("Initialisiere Lieder");
 
 		songs = new ArrayList<Song>();
 		songs.add(new Song(path + SONG_01, false));
@@ -108,6 +118,7 @@ public class PiSoundAutomation extends JFrame {
 	private void initGpio() {
 
 		System.out.println("initGpio");
+		updateList("Initialisiere GPIO");
 
 		gpio = GpioFactory.getInstance();
 
