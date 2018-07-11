@@ -4,17 +4,15 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
-import javax.swing.ListModel;
 import javax.swing.SwingUtilities;
 
 import com.pi4j.io.gpio.GpioController;
@@ -26,9 +24,6 @@ import com.pi4j.io.gpio.RaspiPin;
 import com.pi4j.io.gpio.event.GpioPinDigitalStateChangeEvent;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 
-import javazoom.jl.decoder.JavaLayerException;
-import javazoom.jl.player.Player;
-
 public class PiSoundAutomation extends JFrame {
 
 	// GPIO
@@ -39,20 +34,20 @@ public class PiSoundAutomation extends JFrame {
 	private GpioPinDigitalInput input03;
 	private GpioPinDigitalInput input04;
 	private GpioPinDigitalInput input05;
-	private GpioPinDigitalInput input06;
 
 	// Music
+	private String path = System.getProperty("user.home") + File.separator + "Music" + File.separator;
 	private final String SONG_01 = "standby.mp3";
 	private final String SONG_02 = "coinInserted.mp3";
 	private final String SONG_03 = "playing.mp3";
 	private final String SONG_04 = "winner.mp3";
 	private final String SONG_05 = "looser.mp3";
+	private List<Song> songs;
 
-	private Soundman soundman;
-	private SoundmanThread soundmanThread;
+	private SoundPlayer soundPlayer;
 
 	private JList<String> list;
-	private DefaultListModel<String> listModel;
+	private static DefaultListModel<String> listModel;
 
 	public static void main(String args[]) {
 
@@ -63,14 +58,14 @@ public class PiSoundAutomation extends JFrame {
 	public PiSoundAutomation() {
 
 		initUi();
-		initWalkman();
+		initSongs();
 		initGpio();
-
+		initThread();
 	}
 
 	private void initUi() {
 
-		setTitle("PiSoundAutomation by Markus Thaler");
+		setTitle("PiSoundAutomation");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setLayout(new BorderLayout(10, 10));
 		setSize(new Dimension(600, 400));
@@ -89,14 +84,24 @@ public class PiSoundAutomation extends JFrame {
 
 	}
 
-	private void initWalkman() {
+	private void initThread() {
 
-		soundman = new Soundman();
+		soundPlayer = new SoundPlayer();
+		SoundPlayerThread soundPlayerThread = new SoundPlayerThread(soundPlayer);
 
-		SoundmanThread soundmanThread = new SoundmanThread(soundman);
+		Thread thread = new Thread(soundPlayerThread);
+		thread.start();
 
-		Thread th = new Thread(soundmanThread);
-		th.start();
+	}
+
+	private void initSongs() {
+
+		songs = new ArrayList<Song>();
+		songs.add(new Song(path + SONG_01, false));
+		songs.add(new Song(path + SONG_02, false));
+		songs.add(new Song(path + SONG_03, false));
+		songs.add(new Song(path + SONG_04, true));
+		songs.add(new Song(path + SONG_05, false));
 
 	}
 
@@ -112,7 +117,6 @@ public class PiSoundAutomation extends JFrame {
 		input03 = gpio.provisionDigitalInputPin(RaspiPin.GPIO_03, PinPullResistance.PULL_DOWN);
 		input04 = gpio.provisionDigitalInputPin(RaspiPin.GPIO_04, PinPullResistance.PULL_DOWN);
 		input05 = gpio.provisionDigitalInputPin(RaspiPin.GPIO_05, PinPullResistance.PULL_DOWN);
-		input06 = gpio.provisionDigitalInputPin(RaspiPin.GPIO_06, PinPullResistance.PULL_DOWN);
 
 		// set shutdown state for this input pin
 		input00.setShutdownOptions(true);
@@ -121,19 +125,17 @@ public class PiSoundAutomation extends JFrame {
 		input03.setShutdownOptions(true);
 		input04.setShutdownOptions(true);
 		input05.setShutdownOptions(true);
-		input06.setShutdownOptions(true);
 
 		// create and register gpio pin listener
 		input00.addListener(new GpioPinListenerDigital() {
-			@Override
+			// @Override
 			public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
 				// display pin state on console
 				System.out.println(" --> GPIO PIN STATE CHANGE: " + event.getPin() + " = " + event.getState());
-
+				updateList(event.getPin() + " = " + event.getState());
 				if (event.getState() == PinState.HIGH) {
-					if (soundman.isPlay())
-						soundman.stop();
-					soundman.play(SONG_01);
+
+					soundPlayer.play(songs.get(0));
 
 				}
 
@@ -146,11 +148,10 @@ public class PiSoundAutomation extends JFrame {
 			public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
 				// display pin state on console
 				System.out.println(" --> GPIO PIN STATE CHANGE: " + event.getPin() + " = " + event.getState());
-
+				updateList(event.getPin() + " = " + event.getState());
 				if (event.getState() == PinState.HIGH) {
-					if (soundman.isPlay())
-						soundman.stop();
-					soundman.play(SONG_02);
+
+					soundPlayer.play(songs.get(1));
 
 				}
 
@@ -163,11 +164,10 @@ public class PiSoundAutomation extends JFrame {
 			public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
 				// display pin state on console
 				System.out.println(" --> GPIO PIN STATE CHANGE: " + event.getPin() + " = " + event.getState());
-
+				updateList(event.getPin() + " = " + event.getState());
 				if (event.getState() == PinState.HIGH) {
-					if (soundman.isPlay())
-						soundman.stop();
-					soundman.play(SONG_03);
+
+					soundPlayer.play(songs.get(2));
 
 				}
 
@@ -179,11 +179,11 @@ public class PiSoundAutomation extends JFrame {
 			public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
 				// display pin state on console
 				System.out.println(" --> GPIO PIN STATE CHANGE: " + event.getPin() + " = " + event.getState());
-
+				updateList(event.getPin() + " = " + event.getState());
 				if (event.getState() == PinState.HIGH) {
-					if (soundman.isPlay())
-						soundman.stop();
-					soundman.play(SONG_04);
+
+					soundPlayer.play(songs.get(3));
+
 				}
 
 			}
@@ -194,11 +194,10 @@ public class PiSoundAutomation extends JFrame {
 			public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
 				// display pin state on console
 				System.out.println(" --> GPIO PIN STATE CHANGE: " + event.getPin() + " = " + event.getState());
-
+				updateList(event.getPin() + " = " + event.getState());
 				if (event.getState() == PinState.HIGH) {
-					if (soundman.isPlay())
-						soundman.stop();
-					soundman.play(SONG_05);
+
+					soundPlayer.play(songs.get(4));
 				}
 
 			}
@@ -210,23 +209,9 @@ public class PiSoundAutomation extends JFrame {
 			public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
 				// display pin state on console
 				System.out.println(" --> GPIO PIN STATE CHANGE: " + event.getPin() + " = " + event.getState());
-
+				updateList(event.getPin() + " = " + event.getState());
 				if (event.getState() == PinState.HIGH) {
-					soundman.stop();
-				}
-
-			}
-
-		});
-
-		input06.addListener(new GpioPinListenerDigital() {
-			@Override
-			public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
-				// display pin state on console
-				System.out.println(" --> GPIO PIN STATE CHANGE: " + event.getPin() + " = " + event.getState());
-
-				if (event.getState() == PinState.HIGH) {
-					soundman.setRepeat(true);
+					soundPlayer.stop();
 				}
 
 			}
@@ -243,6 +228,20 @@ public class PiSoundAutomation extends JFrame {
 		// }
 		// }
 
+	}
+
+	public static void updateList(String text) {
+
+		SwingUtilities.invokeLater(new Runnable() {
+
+			public void run() {
+				Date date = new Date();
+				SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+
+				listModel.add(0, simpleDateFormat.format(date) + ": " + text);
+
+			}
+		});
 	}
 
 }
