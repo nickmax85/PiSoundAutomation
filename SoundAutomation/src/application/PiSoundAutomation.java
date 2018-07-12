@@ -107,10 +107,10 @@ public class PiSoundAutomation extends JFrame {
 		updateList("Initialisiere Lieder");
 
 		songs = new ArrayList<Song>();
-		songs.add(new Song(path + SONG_01, false));
+		songs.add(new Song(path + SONG_01, true));
 		songs.add(new Song(path + SONG_02, false));
-		songs.add(new Song(path + SONG_03, false));
-		songs.add(new Song(path + SONG_04, true));
+		songs.add(new Song(path + SONG_03, true));
+		songs.add(new Song(path + SONG_04, false));
 		songs.add(new Song(path + SONG_05, false));
 
 	}
@@ -146,7 +146,7 @@ public class PiSoundAutomation extends JFrame {
 				updateList(event.getPin() + " = " + event.getState());
 				if (event.getState() == PinState.HIGH) {
 
-					soundPlayer.play(songs.get(0));
+					soundPlayer.stop();
 
 				}
 
@@ -162,7 +162,7 @@ public class PiSoundAutomation extends JFrame {
 				updateList(event.getPin() + " = " + event.getState());
 				if (event.getState() == PinState.HIGH) {
 
-					soundPlayer.play(songs.get(1));
+					soundPlayer.play(songs.get(0));
 
 				}
 
@@ -178,7 +178,7 @@ public class PiSoundAutomation extends JFrame {
 				updateList(event.getPin() + " = " + event.getState());
 				if (event.getState() == PinState.HIGH) {
 
-					soundPlayer.play(songs.get(2));
+					soundPlayer.play(songs.get(1));
 
 				}
 
@@ -193,7 +193,7 @@ public class PiSoundAutomation extends JFrame {
 				updateList(event.getPin() + " = " + event.getState());
 				if (event.getState() == PinState.HIGH) {
 
-					soundPlayer.play(songs.get(3));
+					soundPlayer.play(songs.get(2));
 
 				}
 
@@ -208,7 +208,7 @@ public class PiSoundAutomation extends JFrame {
 				updateList(event.getPin() + " = " + event.getState());
 				if (event.getState() == PinState.HIGH) {
 
-					soundPlayer.play(songs.get(4));
+					soundPlayer.play(songs.get(3));
 				}
 
 			}
@@ -222,7 +222,8 @@ public class PiSoundAutomation extends JFrame {
 				System.out.println(" --> GPIO PIN STATE CHANGE: " + event.getPin() + " = " + event.getState());
 				updateList(event.getPin() + " = " + event.getState());
 				if (event.getState() == PinState.HIGH) {
-					soundPlayer.stop();
+
+					soundPlayer.play(songs.get(4));
 				}
 
 			}
