@@ -26,6 +26,8 @@ import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 
 public class PiSoundAutomation extends JFrame {
 
+	private static final long serialVersionUID = 1L;
+
 	// GPIO
 	private GpioController gpio;
 	private GpioPinDigitalInput input00;
@@ -34,6 +36,8 @@ public class PiSoundAutomation extends JFrame {
 	private GpioPinDigitalInput input03;
 	private GpioPinDigitalInput input04;
 	private GpioPinDigitalInput input05;
+
+	private final static int GPIO_DEBOUNCE = 500;
 
 	// Music
 	private String path = System.getProperty("user.home") + File.separator + "Music" + File.separator;
@@ -46,6 +50,7 @@ public class PiSoundAutomation extends JFrame {
 
 	private SoundPlayer soundPlayer;
 
+	// Grafik
 	private JList<String> list;
 	private static DefaultListModel<String> listModel;
 
@@ -79,7 +84,7 @@ public class PiSoundAutomation extends JFrame {
 
 		listModel = new DefaultListModel<String>();
 		list = new JList<String>(listModel);
-		list.setFont(new Font("Arial", Font.PLAIN, 14));
+		list.setFont(new Font("Arial", Font.PLAIN, 13));
 
 		JScrollPane sp = new JScrollPane(list);
 		sp.setAutoscrolls(true);
@@ -128,6 +133,13 @@ public class PiSoundAutomation extends JFrame {
 		input03 = gpio.provisionDigitalInputPin(RaspiPin.GPIO_03, PinPullResistance.PULL_DOWN);
 		input04 = gpio.provisionDigitalInputPin(RaspiPin.GPIO_04, PinPullResistance.PULL_DOWN);
 		input05 = gpio.provisionDigitalInputPin(RaspiPin.GPIO_05, PinPullResistance.PULL_DOWN);
+
+		input00.setDebounce(GPIO_DEBOUNCE);
+		input01.setDebounce(GPIO_DEBOUNCE);
+		input02.setDebounce(GPIO_DEBOUNCE);
+		input03.setDebounce(GPIO_DEBOUNCE);
+		input04.setDebounce(GPIO_DEBOUNCE);
+		input05.setDebounce(GPIO_DEBOUNCE);
 
 		// set shutdown state for this input pin
 		input00.setShutdownOptions(true);
